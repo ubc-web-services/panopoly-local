@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Views plugin handlers.
@@ -7,8 +8,8 @@
 /**
  * Implements hook_views_plugins().
  */
-function admin_views_system_display_views_plugins() {
-  $path = drupal_get_path('module', 'admin_views_system_display');
+function admin_views_views_plugins() {
+  $path = drupal_get_path('module', 'admin_views');
 
   $plugins = array(
     'module' => 'views', // This just tells our themes are elsewhere.
@@ -28,8 +29,8 @@ function admin_views_system_display_views_plugins() {
     ),
     'access' => array(
       'menu' => array(
-        'title' => t('(Deprecated) Menu system path'),
-        'help' => t('This has been deprecated. <strong>DO NOT USE!</strong>'),
+        'title' => t('Menu system path'),
+        'help' => t('Access will be granted based on the original system path.'),
         'handler' => 'views_plugin_access_menu',
         'uses options' => FALSE,
         'path' => "$path/plugins",

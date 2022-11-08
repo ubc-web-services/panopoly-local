@@ -58,9 +58,7 @@ class CurrentSearchGroup extends CurrentSearchItem {
             'query' => $this->getQueryString($item, $adapter),
           ),
         );
-        $row['data'] = theme('current_search_link_active', $variables);
-        $row['class'][] = 'active';
-        $items[] = $row;
+        $items[] = theme('current_search_link_active', $variables);
       }
 
       // If there are items, add the render array.
@@ -76,7 +74,7 @@ class CurrentSearchGroup extends CurrentSearchItem {
 
         // Builds the list.
         $build[$facet_name]['list'] = array(
-          '#theme' => 'item_list__facetapi__current_search_group',
+          '#theme' => 'item_list',
           '#items' => $items,
           '#attributes' => array('class' => array('inline')),
         );

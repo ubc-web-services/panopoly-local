@@ -1,19 +1,17 @@
 <?php
-
 /**
  * @file
- * Provide views handlers for fieldable panel panes.
+ * Provide views handlers for fieldable panel panes
  */
 
 /**
  * Field handler to present a link node edit.
  */
 class fieldable_panels_panes_handler_field_edit_revision extends fieldable_panels_panes_handler_field_view_revision {
-
   /**
-   * {@inheritdoc}
+   * Renders the link.
    */
-  public function render_link($entity, $values) {
+  function render_link($entity, $values) {
     if (fieldable_panels_panes_access('update', $entity)) {
       $this->options['alter']['make_link'] = TRUE;
       $this->options['alter']['path'] = "admin/structure/fieldable-panels-panes/view/$entity->fpid/revision/$entity->vid/edit";
@@ -26,5 +24,4 @@ class fieldable_panels_panes_handler_field_edit_revision extends fieldable_panel
       $this->options['alter']['path'] = '';
     }
   }
-
 }

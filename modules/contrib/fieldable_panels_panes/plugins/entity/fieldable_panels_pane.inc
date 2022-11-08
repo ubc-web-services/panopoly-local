@@ -1,10 +1,8 @@
 <?php
-
 /**
  * @file
  * Definition of the taxonomy term plugin.
  */
-
 $plugin = array(
   'handler' => 'FieldablePanelsPaneEntity',
   'entity path' => 'admin/structure/fieldable-panels-panes/view/%fieldable_panels_panes',

@@ -1,45 +1,16 @@
 {
-    "name": "panopoly/panopoly",
-    "description": "Panopoly is a powerful Drupal base-distribution with a powerful editorial experience",
-    "type": "drupal-profile",
-    "license": "GPL-2.0-or-later",
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "repositories": [
-        {
-            "type": "composer",
-            "url": "https://packages.drupal.org/7"
-        }
-    ],
-    "require-dev": {
-        "consolidation/robo": "^1.4",
-        "spomky-labs/otphp": "^10.0",
-        "drupal/coder": "^8.3.14",
-        "drupal/drupal-extension": "^4.0.1",
-        "friends-of-behat/mink-extension": "^2.5",
-        "symfony/yaml": "^3.4 || ^4.4",
-        "pear/archive_tar": "^1.4"
-    },
-    "replace": {
-        "drupal/panopoly_core": "self.version",
-        "drupal/panopoly_images": "self.version",
-        "drupal/panopoly_pages": "self.version",
-        "drupal/panopoly_theme": "self.version",
-        "drupal/panopoly_widgets": "self.version",
-        "drupal/panopoly_demo": "self.version",
-        "drupal/panopoly_media": "self.version",
-        "drupal/panopoly_test": "self.version",
-        "drupal/panopoly_users": "self.version",
-        "drupal/panopoly_wysiwyg": "self.version"
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-7.x-1.x": "1.x-dev"
-        }
-    },
-    "config": {
-        "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true
-        }
+  "repositories": [
+    {
+      "type": "pear",
+      "url": "https://pear.php.net"
     }
+  ],
+  "require-dev": {
+    "phing/phing": "2.*",
+    "pear/versioncontrol_git": "@dev",
+    "pear/HTTP_Request2": "2.2.x"
+  },
+  "config": {
+    "bin-dir": "bin/"
+  }
 }

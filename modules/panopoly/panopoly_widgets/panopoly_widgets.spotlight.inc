@@ -248,7 +248,6 @@ function panopoly_widgets_field_widget_form(&$form, &$form_state, $field, $insta
       '#title' => t('Link'),
       '#type' => 'textfield',
       '#default_value' => isset($items[$delta]['link']) ? $items[$delta]['link'] : NULL,
-      '#maxlength' => 255,
       '#linkit' => array(
         'enable' => TRUE,
         'profile' => 'content_fields',
@@ -435,14 +434,12 @@ function theme_panopoly_spotlight_wrapper($variables){
       $output .= '<ul>';
     }
     else {
-      // We're not displaying a full pager but we still want to put the links
-      // in the DOM, because the Javascript depends on them.
-      $output .= '<ul style="display: none;">';
+      // We're not displaying a full pager but we still want to render the full pager, and just hide it
+      // in an accessible way, instead of not rendering it at all.
+      $output .= '<ul class="element-invisible">';
     }
     foreach ($items as $delta => $item_data) {
-      $slide_id = drupal_html_id('panopoly-spotlight-' . $delta);
-      $variables['element']['slides'][$delta]['#slide_id'] = $slide_id;
-      $output .= '<li>' . '<a href="#' . $slide_id . '">' . ($delta+1) . '</a></li>';
+      $output .= '<li>' . '<a href="#panopoly-spotlight-' . $delta . '">' . ($delta+1) . '</a></li>';
     }
     $output .= '</ul>';
 
@@ -451,13 +448,13 @@ function theme_panopoly_spotlight_wrapper($variables){
 
       // Have to split up previous and next so that we can squeeze pause between them if needed.
       if ($pager_style == 'mini') {
-        $output .= '<a href="#" class="panopoly-spotlight-previous">' . t('Prev') . '</a>';
+        $output .= '<a href="#panopoly-spotlight" class="panopoly-spotlight-previous">' . t('Prev') . '</a>';
       }
       if (variable_get('panopoly_widgets_spotlight_pause_play_buttons', 1)) {
         $output .= '<a href="#" class="panopoly-spotlight-pause-play">' . t('Pause') . '</a>';
       }
       if ($pager_style == 'mini') {
-        $output .= '<a href="#" class="panopoly-spotlight-next">' . t('Next') . '</a>';
+        $output .= '<a href="#panopoly-spotlight" class="panopoly-spotlight-next">' . t('Next') . '</a>';
       }
 
       $output .= '</div>';
@@ -485,12 +482,11 @@ function theme_panopoly_spotlight_view($variables) {
   $alt = $variables['element']['#items']['alt'];
   $settings = $variables['element']['#settings'];
   $delta = $variables['element']['#delta'];
-  $slide_id = isset($variables['element']['#slide_id']) ? $variables['element']['#slide_id'] : ('panopoly-spotlight-' . $delta);
 
   $image = $variables['element']['#items']['image'];
   $image_markup = theme('image_style', array('style_name' => $settings['image_style'], 'path' => $image->uri, 'alt' => $alt));
 
-  $output = '<div id="' . $slide_id . '" class="' . 'panopoly-spotlight' . '">';
+  $output = '<div id="' . 'panopoly-spotlight-' . $delta . '" class="' . 'panopoly-spotlight' . '">';
 
   if ($link) {
     $output .= l($image_markup, $link, array('html' => TRUE));

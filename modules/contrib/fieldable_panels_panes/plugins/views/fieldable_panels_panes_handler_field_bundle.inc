@@ -2,18 +2,14 @@
 
 /**
  * @file
- * Provide views handlers for fieldable panel panes fields.
+ * Provide views handlers for fieldable panel panes fields
  */
 
 /**
  * Field handler to translate a node type into its readable form.
  */
 class fieldable_panels_panes_handler_field_bundle extends views_handler_field {
-
-  /**
-   * {@inheritdoc}
-   */
-  public function option_definition() {
+  function option_definition() {
     $options = parent::option_definition();
     $options['machine_name'] = array('default' => FALSE);
 
@@ -21,9 +17,9 @@ class fieldable_panels_panes_handler_field_bundle extends views_handler_field {
   }
 
   /**
-   * {@inheritdoc}
+   * Provide machine_name option for to node type display.
    */
-  public function options_form(&$form, &$form_state) {
+  function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
 
     $form['machine_name'] = array(
@@ -35,10 +31,7 @@ class fieldable_panels_panes_handler_field_bundle extends views_handler_field {
     );
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function render($values) {
+  function render($values) {
     $value = $this->get_value($values);
     if (!$this->options['machine_name']) {
       $value = fieldable_panels_panes_get_bundle_label($value);
@@ -46,5 +39,4 @@ class fieldable_panels_panes_handler_field_bundle extends views_handler_field {
 
     return $this->sanitize_value($value);
   }
-
 }

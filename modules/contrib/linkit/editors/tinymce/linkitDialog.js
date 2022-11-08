@@ -55,29 +55,13 @@ Drupal.linkit.registerDialogHelper('tinymce', {
    *   The link object.
    */
   insertLink : function(data) {
-    var editor = Drupal.settings.linkit.currentInstance.editor;
+    var editor = Drupal.settings.linkit.currentInstance.editor,
+    element = editor.dom.getParent(editor.selection.getNode(), 'A');
 
     // Restore the selection if the browser is IE.
     if (tinymce.isIE) {
       editor.selection.moveToBookmark(editor.windowManager.bookmark);
-
-      // The selection won't take affect until after we cede control back to
-      // the browser, so use setTimeout() to run this function again.
-      var self = this;
-      setTimeout(function () {
-        self._insertLink(data, editor);
-      }, 0);
     }
-    else {
-      this._insertLink(data, editor);
-    }
-  },
-
-  /**
-   * Do the actual work of inserting a link into the editor.
-   */
-  _insertLink : function (data, editor) {
-    var element = editor.dom.getParent(editor.selection.getNode(), 'A');
 
     // Set undo begin point.
     editor.execCommand("mceBeginUndoLevel");

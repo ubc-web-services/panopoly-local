@@ -8,24 +8,23 @@
   Drupal.behaviors[behavior] = {
     attach: function(context, settings) {
       // If there is no fields, just stop here.
-      if (!('linkit' in settings) || !('fields' in settings.linkit)) {
+      if (undefined === settings.linkit || null === settings.linkit.fields) {
         return false;
       }
 
       $.each(settings.linkit.fields, function(i, instance) {
         $('#' + instance.source, context).once(behavior, function() {
           var element = this;
-          var instanceCopy = $.extend({}, instance);
 
           $('.linkit-field-' + instance.source).click(function(event) {
             event.preventDefault();
 
             // Only care about selection if the element is a textarea.
             if ('textarea' === element.nodeName.toLowerCase()) {
-              instanceCopy.selection = Drupal.linkit.getDialogHelper('field').getSelection(element);
+              instance.selection = Drupal.linkit.getDialogHelper('field').getSelection(element);
             }
 
-            Drupal.settings.linkit.currentInstance = instanceCopy;
+            Drupal.settings.linkit.currentInstance = instance;
             Drupal.linkit.createModal();
           });
         });
@@ -146,16 +145,6 @@
 
     getField: function(id) {
       return document.getElementById(id);
-    },
-
-    /**
-     * Set browser focus to the button that triggered the modal for better
-     * accessibility.
-     */
-    onModalClose: function() {
-      var instance = Drupal.settings.linkit.currentInstance;
-      $('.linkit-field-' + instance.source).focus();
     }
-
   });
 })(jQuery, 'linkitField');

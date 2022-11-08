@@ -53,9 +53,7 @@ div.pane-bundle-video .media-youtube-video embed {
 }
 
 /* Table Widget */
-#modalContent .form-tablefield.tablefield-header-orientation-horizontal .tablefield-row-0,
-#modalContent .form-tablefield.tablefield-header-orientation-vertical .col-0,
-#modalContent .form-tablefield.tablefield-header-orientation-vertical .col-0 input {
+#modalContent .tablefield-row-0 {
   background-color: rgba(0, 0, 0, 0.51);
   color: #ffffff;
   font-weight: bold;

@@ -1,6 +1,0 @@
-services:
-  appserver:
-    overrides:
-      volumes:
-        - CI_PROJECT_DIR:/app/profiles/panopoly
-

@@ -14,24 +14,23 @@ services:
   - mysql
 
 php:
-  - 7.4
+  - 5.6
 
 matrix:
   fast_finish: true
-  include:
-    - php: "8.1"
-      env: UPGRADE=none INSTALL_PANOPOLY_DEMO_FROM_APPS=1
-    - php: "8.0"
-      env: UPGRADE=none INSTALL_PANOPOLY_DEMO_FROM_APPS=1
-    - php: "7.3"
+  allow_failures:
+    - php: "hhvm"
       env: UPGRADE=none INSTALL_PANOPOLY_DEMO_FROM_APPS=1
     - php: "7.2"
       env: UPGRADE=none INSTALL_PANOPOLY_DEMO_FROM_APPS=1
-    - php: "7.1"
+  include:
+    - php: "7"
       env: UPGRADE=none INSTALL_PANOPOLY_DEMO_FROM_APPS=1
-    - php: "7.0"
+    - php: "5.5"
       env: UPGRADE=none INSTALL_PANOPOLY_DEMO_FROM_APPS=1
-    - php: "5.6"
+    - php: "5.4"
+      env: UPGRADE=none INSTALL_PANOPOLY_DEMO_FROM_APPS=1
+    - php: "hhvm"
       env: UPGRADE=none INSTALL_PANOPOLY_DEMO_FROM_APPS=1
 
 env:
@@ -39,8 +38,6 @@ env:
     # add composer's global bin directory to the path
     # see: https://github.com/drush-ops/drush#install---composer
     - PATH="$PATH:$HOME/.composer/vendor/bin"
-    # force composer 1.8+ to use a specific folder as home
-    - COMPOSER_HOME="$HOME/.composer/"
 
     # Configuration variables.
     - DRUPAL_TI_DISTRIBUTION_NAME="panopoly"
@@ -54,7 +51,6 @@ env:
 
     # The environment to use, supported are: drupal-7, drupal-8
     - DRUPAL_TI_ENVIRONMENT="drupal-7"
-    - DRUPAL_TI_DRUSH_VERSION="drush/drush:8.4.*"
 
     # Drupal specific variables.
     - DRUPAL_TI_DB="drupal_travis_db"
@@ -77,8 +73,6 @@ env:
     - DRUPAL_TI_BEHAT_YML="behat.travis.yml.dist"
     # This is used to setup Xvfb.
     - DRUPAL_TI_BEHAT_SCREENSIZE_COLOR="1920x1080x24"
-    # This shouldn't be necessary, but the generic maximizeWindow() method seems not to be working.
-    - PANOPOLY_BEHAT_WINDOW_SIZE="1920x1080"
     # The version of selenium that should be used.
     - DRUPAL_TI_BEHAT_SELENIUM_VERSION="2.47.1"
     - DRUPAL_TI_BEHAT_DRIVER="selenium"
@@ -96,9 +90,6 @@ env:
     # This needs to match your .coveralls.yml file.
     - DRUPAL_TI_COVERAGE_FILE="build/logs/clover.xml"
 
-    # Print out PHP notices that come up during Behat tests.
-    - PANOPOLY_BEHAT_FLAG_PHP_NOTICES=1
-
     # Debug options
     #- DRUPAL_TI_DEBUG="-x -v"
     # Set to "all" to output all files, set to e.g. "xvfb selenium" or "selenium",
@@ -115,12 +106,16 @@ env:
     #- DRUPAL_TI_RUNNERS="phpunit simpletest behat"
   matrix:
     - UPGRADE=none     INSTALL_PANOPOLY_DEMO_FROM_APPS=1
-    - UPGRADE=7.x-1.89
-    - UPGRADE=7.x-1.88
-    - UPGRADE=7.x-1.87
-    - UPGRADE=7.x-1.86
-    - UPGRADE=7.x-1.85
-    - UPGRADE=7.x-1.84
+    - UPGRADE=7.x-1.61
+    - UPGRADE=7.x-1.60
+    - UPGRADE=7.x-1.59
+    - UPGRADE=7.x-1.58
+    - UPGRADE=7.x-1.57
+    - UPGRADE=7.x-1.56
+    - UPGRADE=7.x-1.55
+    - UPGRADE=7.x-1.54
+    - UPGRADE=7.x-1.51
+    - UPGRADE=7.x-1.50
 
 # Cache Composer & Drush directories.
 cache:
@@ -136,7 +131,6 @@ mysql:
 before_install:
   - composer self-update
   - composer global require "lionsad/drupal_ti:dev-master"
-  - sudo apt-get install -y libgconf-2-4
   - drupal-ti before_install
 
 install:

@@ -104,10 +104,6 @@ class SearchApiViewsHandlerFilterDate extends SearchApiViewsHandlerFilterNumeric
     // If we are using the date popup widget, overwrite the settings of the form
     // according to what date_popup expects.
     elseif ($is_date_popup) {
-      // Add an "id" for the "value" field, since it is expected in
-      // date_views_form_views_exposed_form_alter().
-      // @see date_views_filter_handler_simple::value_form()
-      $form['value']['#id'] = 'date_views_exposed_filter-' . bin2hex(drupal_random_bytes(16));
       $form['value']['#type'] = 'date_popup';
       $form['value']['#date_format'] =  $this->options['date_popup_format'];
       $form['value']['#date_year_range'] = $this->options['year_range'];
@@ -126,8 +122,6 @@ class SearchApiViewsHandlerFilterDate extends SearchApiViewsHandlerFilterNumeric
    * Add this filter to the query.
    */
   public function query() {
-    $this->normalizeValue();
-
     if ($this->operator === 'empty') {
       $this->query->condition($this->real_field, NULL, '=', $this->options['group']);
     }
@@ -135,11 +129,11 @@ class SearchApiViewsHandlerFilterDate extends SearchApiViewsHandlerFilterNumeric
       $this->query->condition($this->real_field, NULL, '<>', $this->options['group']);
     }
     elseif (in_array($this->operator, array('between', 'not between'), TRUE)) {
-      $min = $this->value['min'];
+      $min = isset($this->value[0]['min']) ? $this->value[0]['min'] : '';
       if ($min !== '') {
         $min = is_numeric($min) ? $min : strtotime($min, REQUEST_TIME);
       }
-      $max = $this->value['max'];
+      $max = isset($this->value[0]['max']) ? $this->value[0]['max'] : '';
       if ($max !== '') {
         $max = is_numeric($max) ? $max : strtotime($max, REQUEST_TIME);
       }
@@ -157,7 +151,8 @@ class SearchApiViewsHandlerFilterDate extends SearchApiViewsHandlerFilterNumeric
       }
     }
     else {
-      $v = is_numeric($this->value['value']) ? $this->value['value'] : strtotime($this->value['value'], REQUEST_TIME);
+      $value = isset($this->value[0]) ? $this->value[0]['value'] : $this->value['value'];
+      $v = is_numeric($value) ? $value : strtotime($value, REQUEST_TIME);
       if ($v !== FALSE) {
         $this->query->condition($this->real_field, $v, $this->operator, $this->options['group']);
       }

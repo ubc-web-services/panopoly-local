@@ -5,6 +5,7 @@ Feature: Add submenu widget
 
   Background:
     Given I am logged in as a user with the "administrator" role
+      And Panopoly magic live previews are disabled
     # Create two pages with a parent-child relationship in the menu.
     When I visit "/node/add/panopoly-test-page"
       And I fill in the following:

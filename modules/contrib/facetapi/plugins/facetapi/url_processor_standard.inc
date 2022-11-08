@@ -56,8 +56,7 @@ class FacetapiUrlProcessorStandard extends FacetapiUrlProcessor {
         // Strips all other filters for this facet if limit option is set.
         if ($this->limitActiveItems($facet)) {
           foreach ($qstring[$this->filterKey] as $pos => $filter) {
-            // Identify a filter by field alias.
-            if (0 === strpos($filter, "$field_alias:")) {
+            if (0 === strpos($filter, $field_alias)) {
               unset($qstring[$this->filterKey][$pos]);
             }
           }

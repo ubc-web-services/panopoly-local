@@ -7,14 +7,15 @@
  */
 Drupal.wysiwyg.editor.init.tinymce = function(settings, pluginInfo) {
   // Fix Drupal toolbar obscuring editor toolbar in fullscreen mode.
+  var $drupalToolbars = $('#toolbar, #admin-menu', Drupal.overlayChild ? window.parent.document : document);
   tinyMCE.onAddEditor.add(function (mgr, ed) {
     if (ed.id == 'mce_fullscreen') {
-      Drupal.wysiwyg.utilities.onFullscreenEnter();
+      $drupalToolbars.hide();
     }
   });
   tinyMCE.onRemoveEditor.add(function (mgr, ed) {
     if (ed.id == 'mce_fullscreen') {
-      Drupal.wysiwyg.utilities.onFullscreenExit();
+      $drupalToolbars.show();
     }
     else {
       // Free our reference to the private instance to not risk memory leaks.
@@ -69,9 +70,6 @@ Drupal.wysiwyg.editor.attach.tinymce = function(context, params, settings) {
     // });
     // $('#' + ed.editorContainer + ' table.mceLayout td.mceToolbar').append($toolbar);
     // $('#' + ed.editorContainer + ' table.mceToolbar').remove();
-    ed.onChange.add(function (ed) {
-      ed._drupalWysiwygInstance.contentsChanged();
-    });
   });
 
   // Remove TinyMCE's internal mceItem class, which was incorrectly added to

@@ -174,9 +174,7 @@ function _menu_block_format_title($config) {
     );
     if ($config['parent_mlid']) {
       $parent_item = menu_link_load($config['parent_mlid']);
-      if ($parent_item) {
-        $replacements['@menu_name'] = $parent_item['title'];
-      }
+      $replacements['@menu_name'] = $parent_item['title'];
     }
     if ($config['follow']) {
       $title = t('@menu_name (active menu item)', $replacements);

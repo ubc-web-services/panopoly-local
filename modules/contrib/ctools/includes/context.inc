@@ -1116,7 +1116,7 @@ function ctools_context_next_id($objects, $name) {
   foreach ($objects as $object) {
     if (isset($object['name']) && $object['name'] === $name) {
       if (isset($object['id']) && $object['id'] > $id) {
-        $id = (int) $object['id'];
+        $id = $object['id'];
       }
       // @todo If obj has no 'id', should we increment local id? $id = $id + 1;
     }
@@ -1416,12 +1416,16 @@ function ctools_context_get_context_from_relationships($relationships, &$context
     if (is_array($rdata['context'])) {
       $rcontexts = array();
       foreach ($rdata['context'] as $cid) {
-        if (!empty($contexts[$cid])) {
-          $rcontexts[] = $contexts[$cid];
+        if (empty($contexts[$cid])) {
+          continue 2;
         }
+        $rcontexts[] = $contexts[$cid];
       }
     }
-    elseif (!empty($contexts[$rdata['context']])) {
+    else {
+      if (empty($contexts[$rdata['context']])) {
+        continue;
+      }
       $rcontexts = $contexts[$rdata['context']];
     }
 

@@ -1,32 +1,24 @@
 <?php
-
 /**
  * @file
- * Provide views handlers for fieldable panel panes.
+ * Provide views handlers for fieldable panel panes
  */
 
 /**
  * Field handler to display if the revision is current or not.
  */
 class fieldable_panels_panes_handler_field_is_current extends views_handler_field {
-
   /**
-   * {@inheritdoc}
+   * Stores all entities which are in the result.
    */
   public $entities;
 
-  /**
-   * {@inheritdoc}
-   */
-  public function construct() {
+  function construct() {
     parent::construct();
     $this->additional_fields = array('fpid', 'vid');
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function pre_render(&$values) {
+  function pre_render(&$values) {
     $this->entities = array();
     if (!empty($values)) {
       foreach ($values as $row_index => $value) {
@@ -44,20 +36,14 @@ class fieldable_panels_panes_handler_field_is_current extends views_handler_fiel
     }
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function option_definition() {
+  function option_definition() {
     $options = parent::option_definition();
     $options['current_text'] = array('default' => 'Current', 'translatable' => TRUE);
     $options['not_current_text'] = array('default' => '', 'translatable' => TRUE);
     return $options;
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function options_form(&$form, &$form_state) {
+  function options_form(&$form, &$form_state) {
     $form['current_text'] = array(
       '#type' => 'textfield',
       '#title' => t('Text to display if current'),
@@ -74,9 +60,9 @@ class fieldable_panels_panes_handler_field_is_current extends views_handler_fiel
   }
 
   /**
-   * {@inheritdoc}
+   * Called to add the field to a query.
    */
-  public function query() {
+  function query() {
     $this->ensure_my_table();
 
     // This isn't a real field, but we put it there nonetheless.
@@ -85,10 +71,7 @@ class fieldable_panels_panes_handler_field_is_current extends views_handler_fiel
     $this->add_additional_fields();
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function sanitize_value($value, $type = NULL) {
+  function sanitize_value($value, $type = NULL) {
     return filter_xss_admin($value);
   }
 

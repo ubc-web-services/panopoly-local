@@ -891,23 +891,21 @@ class SearchApiDbService extends SearchApiAbstractService {
             // at 500 words and 0.3 at 1000 words.
             $focus = min(1, .01 + 3.5 / (2 + count($words) * .015));
 
-            $token_value = &$token['value'];
-            $token_value = trim(preg_replace('/[\pZ\pC]+/u', ' ', $token_value));
-            if (is_numeric($token_value)) {
-              $token_value = ltrim($token_value, '-0');
+            $value = &$token['value'];
+            if (is_numeric($value)) {
+              $value = ltrim($value, '-0');
             }
-            elseif (drupal_strlen($token_value) < $this->options['min_chars']) {
+            elseif (drupal_strlen($value) < $this->options['min_chars']) {
               continue;
             }
-            $token_value = drupal_strtolower($token_value);
+            $value = drupal_strtolower($value);
             $token['score'] *= $focus;
-            if (!isset($words[$token_value])) {
-              $words[$token_value] = $token;
+            if (!isset($words[$value])) {
+              $words[$value] = $token;
             }
             else {
-              $words[$token_value]['score'] += $token['score'];
+              $words[$value]['score'] += $token['score'];
             }
-            unset($token_value);
           }
           if ($words) {
             $field_name = self::getTextFieldName($name);
@@ -1265,8 +1263,7 @@ class SearchApiDbService extends SearchApiAbstractService {
   protected function createDbQuery(SearchApiQueryInterface $query, array $fields) {
     $keys = &$query->getKeys();
     $keys_set = (boolean) $keys;
-    $tokenizer_active = static::isTokenizerActive($query->getIndex());
-    $keys = $this->prepareKeys($keys, $tokenizer_active);
+    $keys = $this->prepareKeys($keys);
     // Special case: if the outermost $keys array has "#negation" set, we can't
     // handle it like other negated subkeys. To avoid additional complexity
     // later, we just wrap $keys so it becomes a subkey.
@@ -1320,7 +1317,7 @@ class SearchApiDbService extends SearchApiAbstractService {
 
     $filter = $query->getFilter();
     if ($filter->getFilters()) {
-      $condition = $this->createFilterCondition($filter, $fields, $db_query, $query->getIndex());
+      $condition = $this->createFilterCondition($filter, $fields, $db_query);
       if ($condition) {
         $db_query->condition($condition);
       }
@@ -1344,28 +1341,24 @@ class SearchApiDbService extends SearchApiAbstractService {
    *
    * @param array|string|null $keys
    *   The keys which should be preprocessed.
-   * @param bool $tokenizer_active
-   *   (optional) TRUE if we can rely on the "Tokenizer" processor already
-   *   having preprocessed the keywords.
    *
    * @return array|string|null
    *   The preprocessed keys.
    */
-  protected function prepareKeys($keys, $tokenizer_active = FALSE) {
+  protected function prepareKeys($keys) {
     if (is_scalar($keys)) {
-      $keys = $this->splitKeys($keys, $tokenizer_active);
+      $keys = $this->splitKeys($keys);
       return is_array($keys) ? $this->eliminateDuplicates($keys) : $keys;
     }
     elseif (!$keys) {
       return NULL;
     }
-    $keys = $this->splitKeys($keys, $tokenizer_active);
-    $keys = $this->eliminateDuplicates($keys);
+    $keys = $this->eliminateDuplicates($this->splitKeys($keys));
     $conj = $keys['#conjunction'];
     $neg = !empty($keys['#negation']);
     foreach ($keys as $i => &$nested) {
       if (is_array($nested)) {
-        $nested = $this->prepareKeys($nested, $tokenizer_active);
+        $nested = $this->prepareKeys($nested);
         if (is_array($nested) && $neg == !empty($nested['#negation'])) {
           if ($nested['#conjunction'] == $conj) {
             unset($nested['#conjunction'], $nested['#negation']);
@@ -1397,14 +1390,11 @@ class SearchApiDbService extends SearchApiAbstractService {
    *
    * @param array|string|null $keys
    *   The keys to split.
-   * @param bool $tokenizer_active
-   *   (optional) TRUE if we can rely on the "Tokenizer" processor already
-   *   having preprocessed the keywords.
    *
    * @return array|string|null
    *   The keys split into separate words.
    */
-  protected function splitKeys($keys, $tokenizer_active = FALSE) {
+  protected function splitKeys($keys) {
     if (is_scalar($keys)) {
       $proc = drupal_strtolower(trim($keys));
       if (is_numeric($proc)) {
@@ -1414,16 +1404,9 @@ class SearchApiDbService extends SearchApiAbstractService {
         $this->ignored[$keys] = 1;
         return NULL;
       }
-
-      if ($tokenizer_active) {
-        $words = array_filter(explode(' ', $proc), 'strlen');
-      }
-      else {
-        $words = preg_split('/[^\p{L}\p{N}]+/u', $proc, -1, PREG_SPLIT_NO_EMPTY);
-      }
-
+      $words = preg_split('/[^\p{L}\p{N}]+/u', $proc, -1, PREG_SPLIT_NO_EMPTY);
       if (count($words) > 1) {
-        $proc = $this->splitKeys($words, $tokenizer_active);
+        $proc = $this->splitKeys($words);
         if ($proc) {
           $proc['#conjunction'] = 'AND';
         }
@@ -1435,7 +1418,7 @@ class SearchApiDbService extends SearchApiAbstractService {
     }
     foreach ($keys as $i => $key) {
       if (element_child($i)) {
-        $keys[$i] = $this->splitKeys($key, $tokenizer_active);
+        $keys[$i] = $this->splitKeys($key);
       }
     }
     return array_filter($keys);
@@ -1687,8 +1670,6 @@ class SearchApiDbService extends SearchApiAbstractService {
    *   Internal information about the index's fields.
    * @param SelectQueryInterface $db_query
    *   The database query to which the condition will be added.
-   * @param SearchApiIndex $index
-   *   (optional) The search index whose settings should be used.
    *
    * @return DatabaseCondition|null
    *   The condition to set on the query, or NULL if none is necessary.
@@ -1696,7 +1677,7 @@ class SearchApiDbService extends SearchApiAbstractService {
    * @throws SearchApiException
    *   If an unknown field was used in the filter.
    */
-  protected function createFilterCondition(SearchApiQueryFilterInterface $filter, array $fields, SelectQueryInterface $db_query, SearchApiIndex $index = NULL) {
+  protected function createFilterCondition(SearchApiQueryFilterInterface $filter, array $fields, SelectQueryInterface $db_query) {
     $cond = db_condition($filter->getConjunction());
     // Store whether a JOIN already occurred for a field, so we don't JOIN
     // repeatedly for OR filters.
@@ -1705,7 +1686,7 @@ class SearchApiDbService extends SearchApiAbstractService {
     $tables = array();
     foreach ($filter->getFilters() as $f) {
       if (is_object($f)) {
-        $c = $this->createFilterCondition($f, $fields, $db_query, $index);
+        $c = $this->createFilterCondition($f, $fields, $db_query);
         if ($c) {
           $cond->condition($c);
         }
@@ -1731,10 +1712,7 @@ class SearchApiDbService extends SearchApiAbstractService {
           continue;
         }
         if ($text_type) {
-          if (!isset($tokenizer_active)) {
-            $tokenizer_active = $index && static::isTokenizerActive($index);
-          }
-          $keys = $this->prepareKeys($value, $tokenizer_active);
+          $keys = $this->prepareKeys($value);
           if (!isset($keys)) {
             continue;
           }
@@ -2126,8 +2104,7 @@ class SearchApiDbService extends SearchApiAbstractService {
 
     // Decide which methods we want to use.
     if ($incomplete_key && $settings['suggest_suffix']) {
-      $tokenizer_active = static::isTokenizerActive($index);
-      $processed_key = $this->splitKeys($incomplete_key, $tokenizer_active);
+      $processed_key = $this->splitKeys($incomplete_key);
       if ($processed_key) {
         // In case the $incomplete_key turned out to be more than one word, add
         // all but the last one to the user input.
@@ -2313,20 +2290,6 @@ class SearchApiDbService extends SearchApiAbstractService {
       return mb_strcut($str, $start, $length);
     }
     return substr($str, $start, $length);
-  }
-
-  /**
-   * Determines whether the "Tokenizer" processor is enabled for an index.
-   *
-   * @param SearchApiIndex $index
-   *   The index to check.
-   *
-   * @return bool
-   *   TRUE if the built-in "Tokenizer" processor is enabled on the given index,
-   *   FALSE otherwise.
-   */
-  protected static function isTokenizerActive(SearchApiIndex $index) {
-    return !empty($index->options['processors']['search_api_tokenizer']['status']);
   }
 
 }

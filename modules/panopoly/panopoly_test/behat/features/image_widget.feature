@@ -6,6 +6,7 @@ Feature: Add image widget
   @api @javascript @panopoly_widgets @local_files
   Scenario: Add a image
     Given I am logged in as a user with the "administrator" role
+      And Panopoly magic live previews are disabled
       And I am viewing a landing page
     When I customize this page with the Panels IPE
       And I click "Add new pane"
@@ -42,14 +43,10 @@ Feature: Add image widget
   @api @javascript @panopoly_widgets @local_files
   Scenario: Add an image with link
     Given I am logged in as a user with the "administrator" role
+      And Panopoly magic live previews are disabled
       And I am viewing a landing page
-    # Switch to Bryant layout so image isn't stretched so big.
-    When I change layout with the Panels IPE
-      And I click "Bryant"
-      And I press "Save" in the "CTools modal" region
-      And I wait for the Panels IPE to deactivate
     When I customize this page with the Panels IPE
-      And I click "Add new pane" in the "Bryant Sidebar" region
+      And I click "Add new pane"
       And I click "Add image" in the "CTools modal" region
     Then I should see "Configure new Add image"
     When I fill in the following:
@@ -76,9 +73,9 @@ Feature: Add image widget
       And I press "Save"
       And I wait for the Panels IPE to deactivate
     Then I should see "Testing image widget title"
-      And I should see the image alt "Testing alt text" in the "Bryant Sidebar" region
-      And I should see the link "Testing alt text" in the "Bryant Sidebar" region
-    When I follow "Testing alt text" in the "Bryant Sidebar" region
+      And I should see the image alt "Testing alt text" in the "Boxton Content" region
+      And I should see the link "Testing alt text" in the "Boxton Content" region
+    When I follow "Testing alt text" in the "Boxton Content" region
     Then the url should match "/project/panopoly"
 
   # TODO: we use the @panopoly_wysiwyg tag because that is where Linkit comes
@@ -86,6 +83,7 @@ Feature: Add image widget
   @api @javascript @panopoly_widgets @panopoly_wysiwyg
   Scenario: Add an image with Linkit support
     Given I am logged in as a user with the "administrator" role
+      And Panopoly magic live previews are disabled
       And I am viewing a landing page
     When I customize this page with the Panels IPE
       And I click "Add new pane"

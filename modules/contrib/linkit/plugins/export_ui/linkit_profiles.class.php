@@ -32,9 +32,6 @@ class linkit_profiles extends ctools_export_ui {
       case 'storage':
         $this->sorts[$name] = $item->{$schema['export']['export type string']} . $name;
         break;
-      case 'weight':
-        $this->sorts[$name] = isset($item->weight) ? $item->weight : 0;
-        break;
     }
 
     $this->rows[$name]['data'] = array();
@@ -66,9 +63,5 @@ class linkit_profiles extends ctools_export_ui {
     $header[] = array('data' => t('Storage'), 'class' => array('ctools-export-ui-storage'));
     $header[] = array('data' => t('Operations'), 'class' => array('ctools-export-ui-operations'));
     return $header;
-  }
-
-  function list_sort_options() {
-    return parent::list_sort_options() + array('weight' => t('Weight'));
   }
 }

@@ -5,6 +5,7 @@ Feature: Add content page
 
   Background: 
     Given I am logged in as a user with the "administrator" role
+      And Panopoly magic live previews are disabled
     When I visit "/node/add/panopoly-page"
       And I fill in the following:
         | Title               | Testing title |
