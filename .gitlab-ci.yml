@@ -1,0 +1,137 @@
+image: registry.gitlab.com/mydropwizard/lando-docker
+
+variables:
+  PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/packages/${CI_COMMIT_TAG}"
+  DOCKER_HOST: 'tcp://docker:2375/'
+
+services:
+  - docker:dind
+
+stages:
+  - build
+  - package
+  - release
+
+test:
+  stage: build
+  script:
+    - .gitlab-ci/test.sh
+  parallel:
+    matrix:
+      - UPGRADE: 'no-upgrade'
+        PHP_VERSION:
+          - '8.1'
+          - '8.0'
+          - '7.4'
+          - '7.3'
+      - UPGRADE:
+          - '7.x-1.89'
+          - '7.x-1.88'
+          - '7.x-1.87'
+          - '7.x-1.86'
+          - '7.x-1.85'
+          - '7.x-1.84'
+        PHP_VERSION: '7.4'
+  artifacts:
+    when: on_failure
+    name: "screenshots-${CI_BUILD_STAGE}-${CI_BUILD_REF_NAME}"
+    expire_in: 1 week
+    paths:
+      - drupal/sites/default/files/screenshots
+
+push:
+  stage: build
+  image: php:7.4
+  before_script:
+    - apt-get update
+    - DEBIAN_FRONTEND=noninteractive apt-get install -yq wget zip unzip git libpng-dev
+
+    # Configure Git.
+    - git config --global user.email "$GITLAB_USER_EMAIL"
+    - git config --global user.name "$GITLAB_USER_NAME"
+
+    # Install PHP extensions.
+    - docker-php-ext-install gd
+
+    # Install composer
+    - php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    - php composer-setup.php
+    - php -r "unlink('composer-setup.php');"
+
+    # Install splitsh-lite.
+    - wget https://github.com/splitsh/lite/releases/download/v1.0.1/lite_linux_amd64.tar.gz
+    - tar -zxpf lite_linux_amd64.tar.gz --directory /usr/local/bin/
+    - rm lite_linux_amd64.tar.gz
+  script:
+    # Attach the current commit to its branch.
+    - git checkout -b $CI_COMMIT_REF_NAME
+
+    # Push code changes to main Drupal.org repo.
+    - mkdir -p ~/.ssh
+    - echo "$GIT_DEPLOY_KEY" >> ~/.ssh/id_rsa
+    - echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+    - chmod 0700 ~/.ssh
+    - chmod 0600 ~/.ssh/id_rsa
+    - chmod 0644 ~/.ssh/known_hosts
+    - git remote add drupalorg git@git.drupal.org:project/panopoly.git
+    - git push drupalorg $CI_COMMIT_REF_NAME
+
+    # Do subtree split and push.
+    - php composer.phar install
+    - ./vendor/bin/robo subtree-split --push
+  only:
+    refs:
+      - 7.x-1.x
+    variables:
+      - $GIT_DEPLOY_KEY
+      - $SSH_KNOWN_HOSTS
+
+package:
+  stage: package
+  image: ubuntu:20.04
+  before_script:
+    - apt-get update
+    - DEBIAN_FRONTEND=noninteractive apt-get install -yq php7.4-cli php7.4-xml php7.4-curl php7.4-zip wget curl zip unzip git ca-certificates
+
+    # Install composer
+    - php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    - php composer-setup.php
+    - php -r "unlink('composer-setup.php');"
+
+    # Setup path with composer.
+    - mkdir bin
+    - mv composer.phar bin/composer
+    - export PATH="$PWD/bin:$PWD/vendor/bin:$PATH"
+
+    # Install Robo and Drush.
+    - composer install
+    - composer require --dev --update-with-dependencies drush/drush:^8.3
+  script:
+    # Package up all the release zip and tar files.
+    - robo package $CI_COMMIT_TAG packages/
+
+    # Upload the packages to GitLab.
+    - cd packages
+    - |
+      for fn in *.zip *.tar.gz; do
+        curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file $fn ${PACKAGE_REGISTRY_URL}/$fn
+      done
+    - cd ..
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^7\.x-1\.\d+/'
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  script:
+    - |
+      release-cli create --name "Panopoly $CI_COMMIT_TAG" --tag-name $CI_COMMIT_TAG \
+        --assets-link "{\"name\":\"panopoly-${CI_COMMIT_TAG}-core.tar.gz\",\"url\":\"${PACKAGE_REGISTRY_URL}/panopoly-${CI_COMMIT_TAG}-core.tar.gz\"}" \
+        --assets-link "{\"name\":\"panopoly-${CI_COMMIT_TAG}-core.zip\",\"url\":\"${PACKAGE_REGISTRY_URL}/panopoly-${CI_COMMIT_TAG}-core.zip\"}" \
+        --assets-link "{\"name\":\"panopoly-${CI_COMMIT_TAG}-no-core.tar.gz\",\"url\":\"${PACKAGE_REGISTRY_URL}/panopoly-${CI_COMMIT_TAG}-no-core.tar.gz\"}" \
+        --assets-link "{\"name\":\"panopoly-${CI_COMMIT_TAG}-no-core.zip\",\"url\":\"${PACKAGE_REGISTRY_URL}/panopoly-${CI_COMMIT_TAG}-no-core.zip\"}" \
+        --assets-link "{\"name\":\"panopoly-${CI_COMMIT_TAG}.tar.gz\",\"url\":\"${PACKAGE_REGISTRY_URL}/panopoly-${CI_COMMIT_TAG}.tar.gz\"}" \
+        --assets-link "{\"name\":\"panopoly-${CI_COMMIT_TAG}.zip\",\"url\":\"${PACKAGE_REGISTRY_URL}/panopoly-${CI_COMMIT_TAG}.zip\"}"
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^7\.x-1\.\d+/'
+
