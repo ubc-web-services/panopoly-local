@@ -270,14 +270,21 @@ function panopoly_widgets_form_alter(&$form, &$form_state, $form_id) {
     // and makes sense with that option.
     $form['expanded']['#weight'] = 8;
     $form['expanded']['#title'] = t('<strong>Expand children</strong> of this tree.');
+
+    // Hide the 'Always display title' option that only useful in rare edge
+    // cases.
+    if (!empty($form['display_empty'])) {
+      $form['display_empty']['#access'] = FALSE;
+    }
   }
 
   if ($form_id == 'fieldable_panels_panes_fieldable_panels_pane_content_type_edit_form') {
 
     // Add fields to the FPP object if we are adding a reusable object for the first time
-    if ($form_state['entity']->reusable && $form_state['op'] == 'add' && $form_state['rebuild'] == FALSE) {
+    if ($form_state['entity']->reusable && $form_state['op'] == 'add') {
       if (fieldable_panels_panes_access('update', $form_state['entity'])) {
         $form = fieldable_panels_panes_entity_edit_form($form, $form_state);
+        $form_state['no update entity'] = FALSE;
       }
       else {
         $form['message']['#markup'] = '<p>' . t("You don't have permission to edit this widget.") . '</p>';
@@ -378,9 +385,9 @@ function panopoly_widgets_entity_info_alter(&$entity_info) {
     'pane top level' => TRUE,
     'pane icon' => drupal_get_path('module', 'panopoly_widgets') . '/images/icon_link.png',
     'admin' => array(
-      'path' => 'admin/structure/fieldable-panels-panes/manage/%fieldable_panels_panes_type',
-      'bundle argument' => 4,
-      'real path' => 'admin/structure/fieldable-panels-panes/manage/quick-links',
+      'path' => 'admin/structure/fieldable-panels-panes/%fieldable_panels_panes_type',
+      'bundle argument' => 3,
+      'real path' => 'admin/structure/fieldable-panels-panes/quick-links',
       'access arguments' => array('administer fieldable panels panes'),
     ),
   );
@@ -393,9 +400,9 @@ function panopoly_widgets_entity_info_alter(&$entity_info) {
     'pane top level' => TRUE,
     'pane icon' => drupal_get_path('module', 'panopoly_widgets') . '/images/icon_file.png',
     'admin' => array(
-      'path' => 'admin/structure/fieldable-panels-panes/manage/%fieldable_panels_panes_type',
-      'bundle argument' => 4,
-      'real path' => 'admin/structure/fieldable-panels-panes/manage/basic-file',
+      'path' => 'admin/structure/fieldable-panels-panes/%fieldable_panels_panes_type',
+      'bundle argument' => 3,
+      'real path' => 'admin/structure/fieldable-panels-panes/basic-file',
       'access arguments' => array('administer fieldable panels panes'),
     ),
   );
@@ -408,9 +415,9 @@ function panopoly_widgets_entity_info_alter(&$entity_info) {
     'pane top level' => TRUE,
     'pane icon' => drupal_get_path('module', 'panopoly_widgets') . '/images/icon_image.png',
     'admin' => array(
-      'path' => 'admin/structure/fieldable-panels-panes/manage/%fieldable_panels_panes_type',
-      'bundle argument' => 4,
-      'real path' => 'admin/structure/fieldable-panels-panes/manage/image',
+      'path' => 'admin/structure/fieldable-panels-panes/%fieldable_panels_panes_type',
+      'bundle argument' => 3,
+      'real path' => 'admin/structure/fieldable-panels-panes/image',
       'access arguments' => array('administer fieldable panels panes'),
     ),
   );
@@ -423,9 +430,9 @@ function panopoly_widgets_entity_info_alter(&$entity_info) {
     'pane top level' => TRUE,
     'pane icon' => drupal_get_path('module', 'panopoly_widgets') . '/images/icon_text.png',
     'admin' => array(
-      'path' => 'admin/structure/fieldable-panels-panes/manage/%fieldable_panels_panes_type',
-      'bundle argument' => 4,
-      'real path' => 'admin/structure/fieldable-panels-panes/manage/text',
+      'path' => 'admin/structure/fieldable-panels-panes/%fieldable_panels_panes_type',
+      'bundle argument' => 3,
+      'real path' => 'admin/structure/fieldable-panels-panes/text',
       'access arguments' => array('administer fieldable panels panes'),
     ),
   );
@@ -438,9 +445,9 @@ function panopoly_widgets_entity_info_alter(&$entity_info) {
     'pane top level' => TRUE,
     'pane icon' => drupal_get_path('module', 'panopoly_widgets') . '/images/icon_map.png',
     'admin' => array(
-      'path' => 'admin/structure/fieldable-panels-panes/manage/%fieldable_panels_panes_type',
-      'bundle argument' => 4,
-      'real path' => 'admin/structure/fieldable-panels-panes/manage/map',
+      'path' => 'admin/structure/fieldable-panels-panes/%fieldable_panels_panes_type',
+      'bundle argument' => 3,
+      'real path' => 'admin/structure/fieldable-panels-panes/map',
       'access arguments' => array('administer fieldable panels panes'),
     ),
   );
@@ -453,9 +460,9 @@ function panopoly_widgets_entity_info_alter(&$entity_info) {
     'pane top level' => TRUE,
     'pane icon' => drupal_get_path('module', 'panopoly_widgets') . '/images/icon_table.png',
     'admin' => array(
-      'path' => 'admin/structure/fieldable-panels-panes/manage/%fieldable_panels_panes_type',
-      'bundle argument' => 4,
-      'real path' => 'admin/structure/fieldable-panels-panes/manage/table',
+      'path' => 'admin/structure/fieldable-panels-panes/%fieldable_panels_panes_type',
+      'bundle argument' => 3,
+      'real path' => 'admin/structure/fieldable-panels-panes/table',
       'access arguments' => array('administer fieldable panels panes'),
     ),
   );
@@ -468,9 +475,9 @@ function panopoly_widgets_entity_info_alter(&$entity_info) {
     'pane top level' => TRUE,
     'pane icon' => drupal_get_path('module', 'panopoly_widgets') . '/images/icon_video.png',
     'admin' => array(
-      'path' => 'admin/structure/fieldable-panels-panes/manage/%fieldable_panels_panes_type',
-      'bundle argument' => 4,
-      'real path' => 'admin/structure/fieldable-panels-panes/manage/video',
+      'path' => 'admin/structure/fieldable-panels-panes/%fieldable_panels_panes_type',
+      'bundle argument' => 3,
+      'real path' => 'admin/structure/fieldable-panels-panes/video',
       'access arguments' => array('administer fieldable panels panes'),
     ),
   );
@@ -483,9 +490,9 @@ function panopoly_widgets_entity_info_alter(&$entity_info) {
     'pane top level' => TRUE,
     'pane icon' => drupal_get_path('module', 'panopoly_widgets') . '/images/icon_spotlight.png',
     'admin' => array(
-      'path' => 'admin/structure/fieldable-panels-panes/manage/%fieldable_panels_panes_type',
-      'bundle argument' => 4,
-      'real path' => 'admin/structure/fieldable-panels-panes/manage/spotlight',
+      'path' => 'admin/structure/fieldable-panels-panes/%fieldable_panels_panes_type',
+      'bundle argument' => 3,
+      'real path' => 'admin/structure/fieldable-panels-panes/spotlight',
       'access arguments' => array('administer fieldable panels panes'),
     ),
   );
@@ -753,7 +760,7 @@ function panopoly_widgets_views_post_execute(&$view) {
 
     // If we are rendering the actual node, rather than showing fields or a
     // table, then we need to move the title override to the node itself.
-    if (is_a($row_plugin, 'entity_views_plugin_row_entity_view')) {
+    if (is_a($row_plugin, 'entity_views_plugin_row_entity_view') && !empty($view->result[0])) {
       $nid = $view->result[0]->nid;
       $overridden_title = $display->handler->options['title'];
       if (!empty($overridden_title)) {
@@ -780,10 +787,36 @@ function panopoly_widgets_views_post_render(&$view) {
   if ($view->name == 'panopoly_widgets_general_content' && $view->current_display == 'piece_of_content') {
     // Reset the title to its original value.
     $display = $view->display[$view->current_display];
-    if (is_a($view->style_plugin->row_plugin, 'entity_views_plugin_row_entity_view')) {
+    if (is_a($view->style_plugin->row_plugin, 'entity_views_plugin_row_entity_view') && !empty($view->result[0])) {
       _panopoly_widgets_content_item_title_rewrite($view->result[0]->nid);
     }
   }
+}
+
+/**
+ * Implements hook_form_views_exposed_form_alter().
+ */
+function panopoly_widgets_form_views_exposed_form_alter(&$form, &$form_state) {
+  $view = $form_state['view'];
+  // We have to do this here, as well as below in the alter hook for the
+  // 'views_content_views_panes_content_type_edit_form' because that doesn't
+  // always happen early enough.
+  if ($view->name == 'panopoly_widgets_general_content' && $view->current_display == 'piece_of_content') {
+    // This needs to happen in an #after_build so that it runs after all the
+    // other processing that happens on this exposed form.
+    $form['#after_build'][] = '_panopoly_widgets_piece_of_content_after_build';
+  }
+}
+
+/**
+ * After build callback for the "Content item" widget's exposed form.
+ *
+ */
+function _panopoly_widgets_piece_of_content_after_build(&$form, &$form_state) {
+  // Disable maxlength on autocomplete field because node titles can be long,
+  // leading to a validation error, preventing the user from referencing them.
+  $form['title']['#maxlength'] = NULL;
+  return $form;
 }
 
 /**
@@ -793,6 +826,12 @@ function panopoly_widgets_form_views_content_views_panes_content_type_edit_form_
   $view = $form_state['view'];
   if ($view->name == 'panopoly_widgets_general_content' && $view->current_display == 'piece_of_content') {
     $exposed =& $form['exposed'];
+
+    // Disable maxlength on autocomplete field because node titles can be long,
+    // leading to a validation error, preventing the user from referencing them.
+    // We need to do this here as well as above in the alter hook for
+    // 'views_exposed_form' because there situations where that doesn't run.
+    $exposed['filter-title']['title']['#maxlength'] = NULL;
 
     // Set required on the form rather than the View because we need to allow
     // either 'title' or 'nid' when actually rendering the View.
@@ -829,7 +868,7 @@ function panopoly_widgets_form_views_content_views_panes_content_type_edit_form_
  */
 function _panopoly_widgets_content_item_form_submit($form, &$form_state) {
   $exposed =& $form_state['values']['exposed'];
-  if ($exposed['title'] != $form_state['original_title']) {
+  if (!isset($form_state['original_title']) || $exposed['title'] != $form_state['original_title']) {
     // If the title has changed, we need to load the node with that title, set
     // the NID, and then clear out the title. We use the View itself to query
     // so that the result is consistent with autocomplete.

@@ -3,7 +3,8 @@ core = 7.x
 
 ; Drupal Core
 projects[drupal][type] = core
-projects[drupal][version] = 7.64
+projects[drupal][version] = 7.91
 
-; Bug with image styles on database update
-projects[drupal][patch][1973278] = http://www.drupal.org/files/issues/image-accommodate_missing_definition-1973278-16.patch
+; Fix for PHP 8.
+projects[drupal][patch][3177541] = "https://www.drupal.org/files/issues/2022-06-02/3177541-7.x-reroll.patch"
+

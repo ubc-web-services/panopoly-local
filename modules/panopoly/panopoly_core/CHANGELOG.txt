@@ -1,3 +1,128 @@
+Panopoly Core 7.x-1.90, 2022-07-22
+-------------------
+- Multiple contrib updates to Panopoly.
+
+Panopoly Core 7.x-1.89, 2022-07-20
+-------------------
+- Update app server URL (breaking CI).
+
+Panopoly Core 7.x-1.88, 2022-05-04
+-------------------
+- No changes since last release.
+
+Panopoly Core 7.x-1.87, 2022-02-17
+-------------------
+- No changes since last release.
+
+Panopoly Core 7.x-1.86, 2022-01-26
+-------------------
+- No changes since last release.
+
+Panopoly Core 7.x-1.85, 2022-01-20
+-------------------
+- No changes since last release.
+
+Panopoly Core 7.x-1.84, 2022-01-05
+-------------------
+- Views pagers don't work when Ajax is enabled.
+
+Panopoly Core 7.x-1.83, 2021-07-21
+-------------------
+- No changes since last release.
+
+Panopoly Core 7.x-1.82, 2021-07-21
+-------------------
+- Warning: count(): Parameter must be an array or an object that implements
+  Countable in panopoly_core_preprocess_page() (line 96 of
+  panopoly_core/panopoly_core.module).
+
+Panopoly Core 7.x-1.81, 2021-06-10
+-------------------
+- Update Link to 1.9.
+- Current page title on taxonomy term page is put before parent page title
+  in breadcrumb.
+- Update Views Bulk Operations to 3.6.
+- Update Token to 1.8.
+- Update Features to 2.13.
+- Update Panels to 3.10 and CTools to 1.19.
+
+Panopoly Core 7.x-1.80, 2021-04-26
+-------------------
+- No changes since last release.
+
+Panopoly Core 7.x-1.79, 2021-01-20
+-------------------
+- No changes since last release.
+
+Panopoly Core 7.x-1.78, 2020-11-30
+-------------------
+- No changes since last release.
+
+Panopoly Core 7.x-1.77, 2020-11-19
+-------------------
+- Patch contrib modules for PHP 7.4.
+
+Panopoly Core 7.x-1.76, 2020-09-17
+-------------------
+- No changes since last release.
+
+Panopoly Core 7.x-1.75, 2020-06-18
+-------------------
+- No changes since last release.
+
+Panopoly Core 7.x-1.74, 2020-05-20
+-------------------
+- Update Panopoly Core with latest version of Views (views-7.x-3.24).
+- Fix fatal error in Date with PHP 7.1+.
+- Prevent PHP notice (Undefined index: title in link_field_load()) during
+  live preview of Image widgets.
+- Update Link to version 1.7.
+- Update Panopoly Core with latest version of Views (views-7.x-3.23).
+- Update Panopoly Core with latest version of Views (views-7.x-3.23).
+
+Panopoly Core 7.x-1.72, 2019-12-19
+-------------------
+- No changes since last release.
+
+Panopoly Core 7.x-1.71, 2019-11-19
+-------------------
+- No changes since last release.
+
+Panopoly Core 7.x-1.70, 2019-06-28
+-------------------
+- Getting ready for the 1.69 release.
+
+7.x-1.69, 2019-06-07
+-------------------
+- Update Panopoly Core to use views-7.x-3.22.
+- Update Panopoly Core to fieldable_panels_panes-7.x-1.13.
+- Update Panopoly Core to use devel-7.x-1.7.
+- Update to ctools-7.x-1.15.
+
+7.x-1.68, 2019-05-29
+-------------------
+- Update UUID to 7.x-1.3 for SA-CONTRIB-2019-052.
+
+7.x-1.67, 2019-05-09
+-------------------
+- Update default jQuery version to 1.10 on new sites.
+
+7.x-1.66, 2019-04-18
+-------------------
+- No changes since last release.
+
+7.x-1.65, 2019-03-27
+-------------------
+- No changes since last release.
+
+7.x-1.64, 2019-03-20
+-------------------
+- No changes since last release.
+
+7.x-1.63, 2019-03-14
+-------------------
+- Update to Views 3.21.
+
 7.x-1.62, 2019-02-21
 -------------------
 - Update to link-7.x-1.6.

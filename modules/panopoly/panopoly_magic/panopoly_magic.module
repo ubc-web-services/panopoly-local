@@ -89,6 +89,16 @@ function panopoly_magic_ajax_form_callback() {
     $form = ctools_content_form($form_state['op'], $form_state['form_info'], $form_state, $form_state['plugin'], $form_state['subtype_name'], $form_state['conf'], $form_state['step']);
   }
 
+  // Hack to set the 'triggering_element' when previewing field formatter
+  // settings (where it strangely doesn't get set).
+  if (empty($form_state['triggering_element']) && !empty($form_state['input']['_triggering_element_value']) && !empty($form_state['complete form']['buttons'])) {
+    foreach ($form_state['complete form']['buttons'] as $button) {
+      if (is_array($button) && isset($button['#value']) && $button['#value'] == $form_state['input']['_triggering_element_value']) {
+        $form_state['triggering_element'] = $button;
+      }
+    }
+  }
+
   if (!empty($form_state['triggering_element'])) {
     $callback = $form_state['triggering_element']['#ajax']['callback'];
   }
@@ -137,7 +147,7 @@ function panopoly_magic_theme($existing, $type, $theme, $path) {
  * Implements hook_menu_alter().
  */
 function panopoly_magic_menu_alter(&$items) {
-  // Include entity_field.inc from ctools to ensure that files can be properly removed 
+  // Include entity_field.inc from ctools to ensure that files can be properly removed
   // from within the panelizer edit forms.
   $items['file/ajax']['file'] = 'entity_field.inc';
   $items['file/ajax']['file path'] = drupal_get_path('module', 'ctools') . '/plugins/content_types/entity_context';
@@ -177,15 +187,15 @@ function panopoly_magic_configure_form($form, &$form_state) {
   );
 
   $form['panopoly_magic_pane_show_description'] = array(
-    '#title' => t('Show pane descriptions when previews are in Single mode'),
+    '#title' => t('Show pane descriptions when adding panes'),
     '#type' => 'checkbox',
     '#states' => array(
-      'visible' => array(
-        ':input[name="panopoly_magic_pane_add_preview"]' => array('value' => PANOPOLY_ADD_PREVIEW_SINGLE),
+      'invisible' => array(
+        ':input[name="panopoly_magic_pane_add_preview"]' => array('value' => PANOPOLY_ADD_PREVIEW_DISABLED),
       ),
     ),
     '#default_value' => variable_get('panopoly_magic_pane_show_description', 1),
-    '#description' => t('Do you want to show text descriptions for available panes in the Add Content dialog when previews are in Single mode?'),
+    '#description' => t('Do you want to show text descriptions for available panes in the Add Content dialog?'),
   );
 
   $form['panopoly_magic_show_panels_styles'] = array(
@@ -290,11 +300,6 @@ function panopoly_magic_form_alter(&$form, &$form_state, $form_id) {
 
     // Do some special processing for stylizer settings forms to ensure previews work correctly.
     if ($form_id == 'panels_edit_style_settings_form') {
-
-      if (!empty($form_state['style']) && is_array($form_state['style'])) {
-        $form_state['style'] = $form_state['style']['name'];
-      }
-
       if (!empty($form_state['values']['settings'])) {
         $form_state['conf'] = $form_state['values']['settings'];
       }
@@ -315,7 +320,7 @@ function panopoly_magic_form_alter(&$form, &$form_state, $form_id) {
       $style = ($form_state['rebuild'] && $form_id == 'panels_edit_style_type_form') ? panels_get_style($form_state['input']['style']) : panels_get_style($form_state['style']);
     }
     elseif ($form_id == 'panels_edit_style_settings_form') {
-      $style = panels_get_style($form_state['style']);
+      $style = is_array($form_state['style']) ? $form_state['style'] : panels_get_style($form_state['style']);
     }
     else {
       $style = NULL;
@@ -349,7 +354,7 @@ function panopoly_magic_form_alter(&$form, &$form_state, $form_id) {
         else {
           $form_state['values'] = $default_values;
         }
-        
+
         //
         // This code is copied from fieldable_panels_panes_entity_edit_form_submit():
         //
@@ -433,7 +438,7 @@ function panopoly_magic_form_alter(&$form, &$form_state, $form_id) {
     else {
       $configuration = $form_state['input'];
     }
-   
+
     $keywords = array();
     $args = array();
     if (!empty($form_state['contexts'])) {
@@ -445,7 +450,7 @@ function panopoly_magic_form_alter(&$form, &$form_state, $form_id) {
     else {
       $context = array();
     }
-   
+
     // Special case for panelizer fields being edited through the IPE. For some reason images are not being fully loaded
     if (!empty($pane->configuration['formatter']) && $pane->configuration['formatter'] == 'image') {
       list($entity_type, $field_name) = explode(':', $pane->subtype);
@@ -520,7 +525,7 @@ function panopoly_magic_form_alter(&$form, &$form_state, $form_id) {
     // Convert any other #ajax enabled buttons to use system/panopoly-magic.
     _panopoly_magic_add_path_to_ajax($form);
   }
-  
+
   /**
    * Globally improve the buttons for the Chaos Tools Content Type Settings Forms
    */
@@ -554,7 +559,7 @@ function panopoly_magic_form_alter(&$form, &$form_state, $form_id) {
   drupal_alter('panopoly_magic_forms_to_improve', $forms_to_improve);
 
   if (in_array($form_id, $forms_to_improve)) {
-  
+
     // Grab child elements and create the fieldset.
     $children = element_children($form);
     if (count($children) > 1) {
@@ -578,7 +583,7 @@ function panopoly_magic_form_alter(&$form, &$form_state, $form_id) {
       }
 
       // Don't show the context when it is the only one
-      if (!empty($form['general_settings']['context']) && count($form['general_settings']['context']['#options']) == 1) { 
+      if (!empty($form['general_settings']['context']) && count($form['general_settings']['context']['#options']) == 1) {
         $form['general_settings']['context']['#type'] = 'value';
         $form['general_settings']['context']['#value'] = $form['general_settings']['context']['#default_value'];
       }
@@ -651,6 +656,10 @@ function _panopoly_magic_process_field_collection_fields($entity_type, $bundle, 
 
         // Stash it for later use.
         $field_collection_fields[$field_name][$langcode][] = array(
+          // Use 'field_collection' for field_collection 7.x-1.0 or later.
+          // @see https://www.drupal.org/project/field_collection/issues/3111102
+          'field_collection' => $field_collection_item,
+          // Use 'entity' for all earlier versions.
           'entity' => $field_collection_item,
         );
       }
@@ -669,7 +678,44 @@ function _panopoly_magic_process_field_collection_fields($entity_type, $bundle, 
 function panopoly_magic_ajax_update_preview($form, $form_state) {
   if (isset($form_state['values']) && isset($form['#panopoly_magic_preview_info']['configuration'])) {
     $form['#panopoly_magic_preview_info']['configuration'] = $form_state['values'] + $form['#panopoly_magic_preview_info']['configuration'];
+
+    // For some reason, the formatter options aren't in $form_state['values']
+    // but only $form_state['input']. Copy those explicitly.
+    if ($form['#form_id'] == 'ctools_entity_field_content_type_formatter_options') {
+      foreach ($form['#panopoly_magic_preview_info']['configuration']['formatter_settings'] as $formatter_setting_key => $formatter_setting_value) {
+        $form['#panopoly_magic_preview_info']['configuration']['formatter_settings'][$formatter_setting_key] = isset($form_state['input'][$formatter_setting_key]) ? $form_state['input'][$formatter_setting_key] : $formatter_setting_value;
+      }
+    }
   }
+
+  // If this is a field is being editted via FAPE, then we need to update the
+  // entity in context with the temporary value of the field, in order for it
+  // to be rendered correctly in the preview.
+  if (isset($form_state['values']) && $form_state['plugin']['name'] == 'entity_field' && isset($form_state['subform_id']) && $form_state['subform_id'] == 'fape_field_edit_field_form' && isset($form['#panopoly_magic_preview_info']['context']['panelizer'])) {
+    $entity_type = $form['#panopoly_magic_preview_info']['context']['panelizer']->type[2];
+    $entity =& $form['#panopoly_magic_preview_info']['context']['panelizer']->data;
+    foreach ($form_state['field'] as $field_name => $lang_field) {
+      field_attach_form_validate($entity_type, $entity, $form, $form_state, array('field_name' => $field_name));
+      field_attach_submit($entity_type, $entity, $form, $form_state, array('field_name' => $field_name));
+
+      // Run the hook_field_load() before rendering. This is necessary for some
+      // fields, like file and image fields.
+      list ($entity_id,,) = entity_extract_ids($entity_type, $entity);
+      $a = FIELD_LOAD_CURRENT;
+      $b = NULL;
+      _field_invoke_multiple('load', $entity_type, array($entity_id => $entity), $a, $b, array('field_name' => $field_name));
+    }
+  }
+
+  // If this is a preview for a View, and it's using any caching, then clear
+  // the cache before rendering the View.
+  if (isset($form_state['view']) && get_class($form_state['view']) == 'view') {
+    $view = $form_state['view'];
+    if ($cache = $view->display_handler->get_plugin('cache')) {
+      $cache->cache_flush();
+    }
+  }
+
   return panopoly_magic_form_post_render_preview('', $form);
 }
 
@@ -784,7 +830,7 @@ function panopoly_magic_autosubmit_configure(&$element) {
   }
 
   $children = element_children($element);
-  
+
   if (!empty($children) && is_array($children)) {
     foreach ($children as $child) {
       panopoly_magic_autosubmit_configure($element[$child]);
@@ -792,16 +838,16 @@ function panopoly_magic_autosubmit_configure(&$element) {
   }
 }
 
-/** 
+/**
  * Implementation of hook_form_FORM_ID_alter()
  */
 function panopoly_magic_form_fieldable_panels_panes_fieldable_panels_pane_content_type_edit_form_alter(&$form, &$form_state, $form_id) {
 
-  // Setup the live preview 
+  // Setup the live preview
   if (variable_get('panopoly_magic_live_preview', 1)) {
     panopoly_magic_autosubmit_configure($form);
 
-    // Special case exclusions for tablefield specific elements. 
+    // Special case exclusions for tablefield specific elements.
     if ($form_state['entity']->bundle == 'table') {
       $form['field_basic_table_table'][LANGUAGE_NONE][0]['tablefield']['rebuild']['count_cols']['#attributes']['class'] = array('ctools-auto-submit-exclude');
       $form['field_basic_table_table'][LANGUAGE_NONE][0]['tablefield']['rebuild']['count_rows']['#attributes']['class'] = array('ctools-auto-submit-exclude');
@@ -826,7 +872,7 @@ function panopoly_magic_form_fieldable_panels_panes_fieldable_panels_pane_conten
   if (!empty($form['widget_settings']['title'])) {
     $form['widget_settings']['title']['#size'] = '';
   }
-  
+
   // Improving the link Options
   if (!empty($form['widget_settings']['link'])) {
     $form['widget_settings']['link']['path']['#size'] = '';
@@ -835,7 +881,7 @@ function panopoly_magic_form_fieldable_panels_panes_fieldable_panels_pane_conten
     $form['widget_settings']['link']['path']['#description'] = t('The URL or Drupal path from which to build the link.');
     $form['widget_settings']['link']['link']['#description'] = '';
   }
-  
+
   // Move the reusable option to the general settings
   if (!empty($form['reusable'])) {
     $form['reusable']['#type'] = '';
@@ -862,14 +908,14 @@ function panopoly_magic_form_fieldable_panels_panes_fieldable_panels_pane_conten
 function _panopoly_magic_visible_element_children($element) {
   $children = array();
   foreach (element_children($element) as $name) {
-    if ($element[$name]['#type'] != 'hidden' && (!isset($element[$name]['#access']) || $element[$name]['#access'])) {
+    if (isset($element[$name]['#type']) && $element[$name]['#type'] != 'hidden' && (!isset($element[$name]['#access']) || $element[$name]['#access'])) {
       $children[] = $name;
     }
   }
   return $children;
 }
 
-/** 
+/**
  * Implementation of hook_form_FORM_ID_alter()
  *
  * Provides customizations to the views content type settings form
@@ -878,7 +924,7 @@ function panopoly_magic_form_views_content_views_panes_content_type_edit_form_al
 
   // Get the configuration
   $conf = $form_state['conf'];
-  
+
   // Add a widget title setting if views allows this to be customized
   if (!empty($form['override_title'])) {
     $form['override_title_markup']['#access'] = FALSE;
@@ -908,8 +954,8 @@ function panopoly_magic_form_views_content_views_panes_content_type_edit_form_al
     $form['exposed']['link_to_view'] = $form['link_to_view'];
     $form['exposed']['link_to_view']['#parents'] = array('link_to_view');
     unset($form['link_to_view']);
-  } 
-  
+  }
+
   // Add an option to make the more link available if views allows this to happen
   if (!empty($form['more_link'])) {
     $form['more_link']['#id'] = 'more-link';
@@ -941,7 +987,7 @@ function panopoly_magic_form_views_content_views_panes_content_type_edit_form_al
     unset($form['use_pager']);
     unset($form['pager_id']);
   }
-  
+
   // Handle the path value that views gives us
   if (!empty($form['path'])) {
     $form['path']['#description'] = t('The URL path used for linking and paging purposes. Leave blank to use the current page.');
@@ -951,7 +997,7 @@ function panopoly_magic_form_views_content_views_panes_content_type_edit_form_al
     $form['exposed']['path']['#parents'] = array('path');
     unset($form['path']);
   }
-  
+
   // Adjust the items per page and offset settings
   if (!empty($form['items_per_page']) && !empty($form['offset'])) {
     $form['items_per_page']['#field_prefix'] = t('Items to Show');
@@ -985,7 +1031,7 @@ function panopoly_magic_form_views_content_views_panes_content_type_edit_form_al
     $form['display_settings']['offset'] = $form['offset'];
     unset($form['offset']);
   }
-  
+
   // Adjust the sort ordering and sort by options
   if (!empty($form['exposed']['sort_order']) && !empty($form['exposed']['sort_by'])) {
     $form['exposed']['sort_order']['#title'] = t('Sort order');
@@ -1019,7 +1065,7 @@ function panopoly_magic_form_views_content_views_panes_content_type_edit_form_al
     $form['fields_override']['#title'] = t('Field Settings');
     $form['fields_override']['#collapsible'] = FALSE;
     foreach ($form['fields_override'] as &$field) {
-      if (is_array($field)) {
+      if (is_array($field) && !empty($field['#title'])) {
         $field['#title'] = t('Display') . ' ' . $field['#title'];
       }
     }
@@ -1027,7 +1073,7 @@ function panopoly_magic_form_views_content_views_panes_content_type_edit_form_al
 
   // Determine if this is a fielded view. If so, add magic display type changer
   $view_handler = $form_state['view']->display_handler;
-  if ($view_handler->options['row_plugin'] == 'fields') {
+  if ($view_handler->get_option('row_plugin') == 'fields') {
     // Set to default view settings if there isn't one.
     if (empty($conf['view_settings'])) {
       if ($form_state['view']->style_plugin->plugin_name == 'table') {
@@ -1100,9 +1146,10 @@ function panopoly_magic_form_views_content_views_panes_content_type_edit_form_al
   $view_modes = panopoly_magic_view_mode_options(panopoly_magic_get_entity_type($form_state['view']));
 
   // Get the default view mode.
-  $options_default_view_mode = ($view_handler->options['row_plugin'] == 'fields') ? 'teaser' : 'full';
-  if (isset($form_state['view']->style_plugin->display->display_options['row_options']['view_mode'])) {
-    $options_default_view_mode = $form_state['view']->style_plugin->display->display_options['row_options']['view_mode'];
+  $options_default_view_mode = ($view_handler->get_option('row_plugin') == 'fields') ? 'teaser' : 'full';
+  $row_options = $view_handler->get_option('row_options');
+  if (isset($form_state['view']->style_plugin->row_plugin->options['view_mode'])) {
+    $options_default_view_mode = $form_state['view']->style_plugin->row_plugin->options['view_mode'];
   }
   if (!array_key_exists($options_default_view_mode, $view_modes)){
     $options_default_view_mode = current(array_keys($view_modes));
@@ -1119,7 +1166,26 @@ function panopoly_magic_form_views_content_views_panes_content_type_edit_form_al
       ),
     ),
   );
-   
+
+  // Show view mode selection if the display type setting exists because the
+  // view mode will get shown/hidden by Javascript.
+  if (isset($form['display_settings']['view_settings'])) {
+    $form['content_settings']['view_mode']['#access'] = TRUE;
+  }
+  // Hide the view mode selection in situations where it'll have no effect.
+  // ex. when not on a node/entity row plugin (except when a table which
+  // inexplicably uses that row plugin).
+  elseif (!in_array($view_handler->get_option('row_plugin'), array('node', 'entity')) || $form_state['view']->style_plugin->plugin_name == 'table') {
+    $form['content_settings']['view_mode']['#access'] = FALSE;
+  }
+  // If the View has opted out of 'View mode' then we hide it from the form.
+  // We do the is_a() check to not break things in the case the user has
+  // upgraded panopoly_magic, but hasn't yet rebuilt the Views cache.
+  $view_allow = $view_handler->get_option('allow');
+  if (is_a($view_handler, 'panopoly_magic_plugin_display_panel_pane') && empty($view_allow['panopoly_magic_view_mode'])) {
+    $form['content_settings']['view_mode']['#access'] = FALSE;
+  }
+
   // Define a general settings fieldset if we have exposed values
   if (!empty($form['exposed']) && count(_panopoly_magic_visible_element_children($form['exposed'])) > 0) {
     $form['exposed']['#type'] = 'fieldset';
@@ -1141,7 +1207,7 @@ function panopoly_magic_form_views_content_views_panes_content_type_edit_form_al
     $form['content_settings']['#title'] = t('Content Settings');
     $form['content_settings']['#weight'] = -27;
   }
-  
+
   // Define a display settings fieldset if we have display options
   if (!empty($form['display_settings']) && count(_panopoly_magic_visible_element_children($form['display_settings'])) > 0) {
     $form['display_settings']['#type'] = 'fieldset';
@@ -1170,7 +1236,7 @@ function panopoly_magic_form_ctools_entity_field_content_type_formatter_options_
 
   // Move the title for the label and formatter to be the field prefix
   foreach (array('label', 'formatter') as $field) {
-    if (!empty($form['general_settings'][$field])) {
+    if (!empty($form['general_settings'][$field]) && !empty($form['general_settings'][$field]['#title'])) {
       $form['general_settings'][$field]['#field_prefix'] = $form['general_settings'][$field]['#title'];
       $form['general_settings'][$field]['#title'] = '';
     }
@@ -1181,7 +1247,8 @@ function panopoly_magic_form_ctools_entity_field_content_type_formatter_options_
     // Determine what entity type and field name we are editing based on the form subtype and URL args.
     $arg_parts = explode(':', arg(4));
     list($entity_type, $field_name) = explode(':', $form_state['subtype_name']);
-    $entity = reset(entity_load($entity_type, array($arg_parts[2])));
+    $entities = entity_load($entity_type, array($arg_parts[2]));
+    $entity = reset($entities);
 
     // Unfortunately the above code is not as reliable as we'd like. There are cases where the field we're editing
     // doesn't have an corrosponding entity (say, comments). Let's make sure we have an entity before adding FAPE specific
@@ -1209,17 +1276,17 @@ function panopoly_magic_form_ctools_entity_field_content_type_formatter_options_
   $form['#pre_render'][] = 'panopoly_magic_panelizer_pre_render';
 
   // When moving backwards through form steps, ensure image widgets properly retain their value.
-  if (!empty($form_state['field_instance']) && $form_state['triggering_element']['#value'] == 'Back') {
+  if (!empty($form_state['field_instance']) && isset($form_state['triggering_element']['#value']) && $form_state['triggering_element']['#value'] == 'Back') {
     $field_name = $form_state['field_instance']['field_name'];
     $field_type = $form_state['field_instance']['widget']['module'];
     $entity = $form_state['entity'];
- 
+
     // Reset the #default_value to the (currently) unsaved entity value.
     if ($field_type == 'image' && !empty($form[$field_name])) {
       $field = $entity->$field_name;
       foreach ($field[LANGUAGE_NONE] as $delta => $value) {
         $form[$field_name][LANGUAGE_NONE][$delta]['#default_value'] = $value;
-      } 
+      }
     }
   }
 
@@ -1270,7 +1337,7 @@ function panopoly_magic_panelizer_pre_render($element) {
 
 function panopoly_magic_form_ctools_entity_field_content_type_formatter_styles_alter(&$form, &$form_state, $form_id) {
   // Push the panopoly magic submitter onto the front of the submit array.
-  // We need it at the beginning so the entity is saved before the IPE 
+  // We need it at the beginning so the entity is saved before the IPE
   // reloads pane content.
   if (!empty($form_state['entity'])) {
     $form['#submit'][] = 'panopoly_magic_fape_submit';
@@ -1294,7 +1361,7 @@ function panopoly_magic_fape_submit(&$form, &$form_state) {
   }
 }
 
-/** 
+/**
  * Implementation of hook_form_FORM_ID_alter().
  *
  * Provides customization to panel pane style form
@@ -1389,7 +1456,7 @@ function theme_panopoly_magic_stylizer_preview_form($vars) {
   }
   else {
     $base_types = ctools_get_style_base_types();
- 
+
     if (!empty($base_types[$plugin['module']][$plugin['type']]['preview'])) {
       $preview = $base_types[$plugin['module']][$plugin['type']]['preview'];
     }
@@ -1457,11 +1524,11 @@ function panopoly_magic_views_content_type_modal_submit(&$form, &$form_state) {
 function panopoly_magic_views_pre_view(&$view) {
   if (isset($view->display_handler->options['pane_conf'])) {
     $conf = $view->display_handler->options['pane_conf'];
-  
+
     if (isset($conf['widget_title'])) {
       $view->display_handler->options['defaults']['title'] = FALSE;
-      $view->display_handler->options['title'] = $conf['widget_title']; 
-      $view->build_info['title'] = $conf['widget_title']; 
+      $view->display_handler->options['title'] = $conf['widget_title'];
+      $view->build_info['title'] = $conf['widget_title'];
     }
 
     // Deal with legacy 'nodes' and others (such as 'files') view settings so
@@ -1764,7 +1831,7 @@ function template_preprocess_panopoly_magic_preview_link(&$vars) {
   $vars['classes_array'][] = 'clearfix';
 }
 
-/** 
+/**
  * Returns HTML for a preview link.
  */
 function theme_panopoly_magic_preview_link($vars) {
@@ -1818,13 +1885,11 @@ function panopoly_magic_process_panels_add_content_modal(&$vars) {
       $legend_title = !empty($title) ? $title : t('Select a widget to show its preview');
       $add_content_link = !empty($title) ? _panopoly_magic_render_add_content_link($vars, $content[$title], $title) : '';
       $preview = !empty($vars['preview_single']) ? $vars['preview_single'] : t('No Preview');
-      $description = !empty($content[$title]['description']) && variable_get('panopoly_magic_pane_show_description', 1) ? $content[$title]['description'] : '';
 
       $vars['columns'][0] = theme('panopoly_magic_preview', array(
         'title' => $legend_title,
         'add_link' => $add_content_link,
         'preview' => $preview,
-        'description' => $description,
       ));
     }
 
@@ -1851,6 +1916,7 @@ function panopoly_magic_process_panels_add_content_modal(&$vars) {
           'add_link' => $add_content_link,
           'preview' => $preview,
           'preview_subtype_name' => $content[$title]['subtype_name'],
+          'description' => $description,
         ));
       }
     }

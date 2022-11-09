@@ -5,7 +5,6 @@ Feature: Add a file to a page
 
   Background:
     Given I am logged in as a user with the "administrator" role
-      And Panopoly magic live previews are disabled
       And I am viewing a landing page
     When I customize this page with the Panels IPE
       And I click "Add new pane"
@@ -14,13 +13,20 @@ Feature: Add a file to a page
 
   @api @javascript @panopoly_widgets @local_files
   Scenario: Add a file
-    Then I should see "Allowed file types: txt doc docx xls xlsx pdf ppt pptx pps ppsx odt ods odp."
     When I fill in the following:
-      | Title | Testing file title |
-      | Editor              | plain_text    |
-      | Text | Testing file text   |
-      And I attach the file "test.txt" to "files[field_basic_file_file_und_0]"
-      And I press "Upload"
+      | Title  | Testing file title |
+      | Editor | plain_text         |
+      | Text   | Testing file text  |
+      And I click "Browse"
+      And I switch to the frame "mediaBrowser"
+    Then I should see "Allowed file types: txt doc docx xls xlsx pdf ppt pptx pps ppsx odt ods odp."
+    When I attach the file "test.txt" to "files[upload]"
+      And I press "Next"
+    Then I should see "Destination"
+    When I select the radio button "Public local files served by the webserver."
+      And I press "Next"
+      And I wait 2 seconds
+      And I switch out of all frames
     Then I should see "test.txt"
     When I press "Add" in the "CTools modal" region
       And I press "Save"
